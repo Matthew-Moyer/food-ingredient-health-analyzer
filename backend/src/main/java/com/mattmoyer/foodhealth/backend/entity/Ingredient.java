@@ -3,6 +3,8 @@ package com.mattmoyer.foodhealth.backend.entity;
 import jakarta.persistence.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class Ingredient {
 
@@ -14,6 +16,7 @@ public class Ingredient {
     private boolean healthy;
     private String notes;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "ingredients")
     private List<Product> products;
 
