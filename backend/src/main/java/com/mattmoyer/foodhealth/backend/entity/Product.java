@@ -14,6 +14,8 @@ public class Product {
     private String brand;
     private String barcode;
 
+    private Integer healthScore;
+
     @ManyToMany
     @JoinTable(name = "product_ingredient", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "ingredient_id"))
     private List<Ingredient> ingredients;
@@ -57,5 +59,13 @@ public class Product {
 
     public void setIngredients(List<Ingredient> ingredients) {
         this.ingredients = ingredients;
+    }
+
+    public Integer getHealthScore() {
+        return healthScore;
+    }
+
+    public void setHealthScore(Integer healthScore) {
+        this.healthScore = healthScore;
     }
 }
