@@ -14,6 +14,7 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
+    // Used when GET /products/{id} is called
     public Product getProductWithHealthScore(Long id) {
 
         Product product = productRepository.findById(id)
@@ -24,6 +25,7 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    // Calculates AND sets score on product
     public void updateHealthScore(Product product) {
 
         if (product.getIngredients() == null || product.getIngredients().isEmpty()) {
@@ -43,5 +45,13 @@ public class ProductService {
         int score = (int) (((double) healthyCount / total) * 100);
 
         product.setHealthScore(score);
+    }
+
+    // ⭐ ADD THIS METHOD (Fixes your error)
+    public int calculateHealthScore(Product product) {
+
+        updateHealthScore(product);
+
+        return product.getHealthScore();
     }
 }

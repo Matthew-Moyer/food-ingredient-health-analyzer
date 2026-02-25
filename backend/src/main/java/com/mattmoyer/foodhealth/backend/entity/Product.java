@@ -2,6 +2,7 @@ package com.mattmoyer.foodhealth.backend.entity;
 
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 public class Product {
@@ -18,7 +19,7 @@ public class Product {
 
     @ManyToMany
     @JoinTable(name = "product_ingredient", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "ingredient_id"))
-    private List<Ingredient> ingredients;
+    private List<Ingredient> ingredients = new ArrayList<>();
 
     // Getters and Setters
     public Long getId() {
