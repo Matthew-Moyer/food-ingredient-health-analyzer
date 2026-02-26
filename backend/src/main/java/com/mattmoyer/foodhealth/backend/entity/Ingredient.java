@@ -60,4 +60,19 @@ public class Ingredient {
     public void setProducts(List<Product> products) {
         this.products = products;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Ingredient))
+            return false;
+        Ingredient that = (Ingredient) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

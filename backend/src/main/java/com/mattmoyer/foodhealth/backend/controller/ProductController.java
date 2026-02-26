@@ -88,7 +88,14 @@ public class ProductController {
 
         for (String rawIngredientName : ingredients) {
 
-            final String ingredientName = rawIngredientName.toLowerCase();
+            // Normalize ingredient name
+            String normalizedName = rawIngredientName
+                    .toLowerCase()
+                    .trim()
+                    .replace(",", "")
+                    .replace(".", "");
+
+            final String ingredientName = normalizedName;
 
             Ingredient ingredient = ingredientRepository
                     .findByName(ingredientName)
@@ -104,7 +111,10 @@ public class ProductController {
                         return ingredientRepository.save(newIngredient);
                     });
 
-            product.getIngredients().add(ingredient);
+            // Prevent duplicate ingredients being added to product
+            if (!product.getIngredients().contains(ingredient)) {
+                product.getIngredients().add(ingredient);
+            }
         }
 
         int score = productService.calculateHealthScore(product);
