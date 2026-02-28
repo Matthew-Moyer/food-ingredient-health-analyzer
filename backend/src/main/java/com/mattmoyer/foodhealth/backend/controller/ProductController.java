@@ -105,7 +105,9 @@ public class ProductController {
                         newIngredient.setName(ingredientName);
 
                         // Unknown ingredients default unhealthy
-                        newIngredient.setHealthy(false);
+                        boolean healthy = productService.determineIfHealthy(ingredientName);
+
+                        newIngredient.setHealthy(healthy);
                         newIngredient.setNotes("Auto-added from barcode scan");
 
                         return ingredientRepository.save(newIngredient);

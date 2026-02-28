@@ -4,6 +4,7 @@ import com.mattmoyer.foodhealth.backend.entity.Product;
 import com.mattmoyer.foodhealth.backend.entity.Ingredient;
 import com.mattmoyer.foodhealth.backend.repository.ProductRepository;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 public class ProductService {
@@ -53,5 +54,48 @@ public class ProductService {
         updateHealthScore(product);
 
         return product.getHealthScore();
+    }
+
+    public boolean determineIfHealthy(String ingredientName) {
+
+        // Healthy ingredients
+        List<String> healthyIngredients = List.of(
+                "water",
+                "rice",
+                "onion",
+                "garlic",
+                "pepper",
+                "cinnamon",
+                "cumin",
+                "chili",
+                "green onions",
+                "vegetable",
+                "tomato",
+                "beans");
+
+        // Unhealthy additives
+        List<String> unhealthyIngredients = List.of(
+                "high fructose corn syrup",
+                "corn syrup",
+                "msg",
+                "monosodium glutamate",
+                "artificial flavor",
+                "natural flavor",
+                "preservative",
+                "citric acid",
+                "hydrolyzed soy protein");
+
+        String name = ingredientName.toLowerCase();
+
+        if (unhealthyIngredients.stream().anyMatch(name::contains)) {
+            return false;
+        }
+
+        if (healthyIngredients.stream().anyMatch(name::contains)) {
+            return true;
+        }
+
+        // Unknown ingredients default neutral/unhealthy
+        return false;
     }
 }
