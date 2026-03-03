@@ -16,6 +16,9 @@ public class Ingredient {
     private boolean healthy;
     private String notes;
 
+    @Column(length = 1000)
+    private String explanation;
+
     @JsonIgnore
     @ManyToMany(mappedBy = "ingredients")
     private List<Product> products;
