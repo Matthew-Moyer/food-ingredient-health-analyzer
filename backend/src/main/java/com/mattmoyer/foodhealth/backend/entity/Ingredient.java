@@ -13,7 +13,8 @@ public class Ingredient {
     private Long id;
 
     private String name;
-    private boolean healthy;
+    @Enumerated(EnumType.STRING)
+    private IngredientHealthStatus healthStatus = IngredientHealthStatus.UNKNOWN;
     private String notes;
 
     @Column(length = 1000)
@@ -40,12 +41,26 @@ public class Ingredient {
         this.name = name;
     }
 
+    public IngredientHealthStatus getHealthStatus() {
+        return healthStatus == null ? IngredientHealthStatus.UNKNOWN : healthStatus;
+    }
+
+    public void setHealthStatus(IngredientHealthStatus healthStatus) {
+        this.healthStatus = healthStatus == null ? IngredientHealthStatus.UNKNOWN : healthStatus;
+    }
+
     public boolean isHealthy() {
-        return healthy;
+        return healthStatus == IngredientHealthStatus.HEALTHY;
+    }
+
+    public boolean isUnknown() {
+        return healthStatus == IngredientHealthStatus.UNKNOWN;
     }
 
     public void setHealthy(boolean healthy) {
-        this.healthy = healthy;
+        this.healthStatus = healthy
+                ? IngredientHealthStatus.HEALTHY
+                : IngredientHealthStatus.UNHEALTHY;
     }
 
     public String getNotes() {

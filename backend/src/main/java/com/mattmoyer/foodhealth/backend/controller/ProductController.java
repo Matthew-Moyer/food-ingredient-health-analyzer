@@ -1,6 +1,7 @@
 package com.mattmoyer.foodhealth.backend.controller;
 
 import com.mattmoyer.foodhealth.backend.entity.Ingredient;
+import com.mattmoyer.foodhealth.backend.entity.IngredientHealthStatus;
 import com.mattmoyer.foodhealth.backend.entity.Product;
 import com.mattmoyer.foodhealth.backend.repository.IngredientRepository;
 import com.mattmoyer.foodhealth.backend.repository.ProductRepository;
@@ -36,7 +37,7 @@ public class ProductController {
 
     @PostMapping
     public Product createProduct(@RequestBody Product product) {
-        return productRepository.save(product);
+        return productService.saveProduct(product);
     }
 
     @GetMapping
@@ -44,9 +45,9 @@ public class ProductController {
         return productRepository.findAll();
     }
 
-    @GetMapping("/{id}")
-    public Product getProduct(@PathVariable Long id) {
-        return productService.getProductWithHealthScore(id);
+    @GetMapping("/{barcode}")
+    public Product getProduct(@PathVariable String barcode) {
+        return productService.getProductWithHealthScore(barcode);
     }
 
     @PostMapping("/{productId}/ingredients/{ingredientId}")
@@ -74,7 +75,11 @@ public class ProductController {
             throw new RuntimeException("Product not found in OpenFoodFacts");
         }
 
-        Product product = new Product();
+        Product product = productService.findLatestProductByBarcode(barcode);
+
+        if (product == null) {
+            product = new Product();
+        }
 
         product.setBarcode(barcode);
         product.setName(
@@ -82,21 +87,18 @@ public class ProductController {
         product.setBrand(
                 (String) productData.getOrDefault("brands", "Unknown"));
 
-        product = productRepository.save(product);
+        product.getIngredients().clear();
 
         // Extract ingredient names
         List<String> ingredients = openFoodFactsService.extractIngredients(productData);
 
         for (String rawIngredientName : ingredients) {
 
-            // Normalize ingredient name
-            String normalizedName = rawIngredientName
-                    .toLowerCase()
-                    .trim()
-                    .replace(",", "")
-                    .replace(".", "");
+            final String ingredientName = productService.normalizeIngredientName(rawIngredientName);
 
-            final String ingredientName = normalizedName;
+            if (ingredientName.isEmpty()) {
+                continue;
+            }
 
             Ingredient ingredient = ingredientRepository
                     .findByName(ingredientName)
@@ -105,10 +107,8 @@ public class ProductController {
                         Ingredient newIngredient = new Ingredient();
                         newIngredient.setName(ingredientName);
 
-                        // Unknown ingredients default unhealthy
-                        boolean healthy = productService.determineIfHealthy(ingredientName);
-
-                        newIngredient.setHealthy(healthy);
+                        IngredientHealthStatus healthStatus = productService.determineHealthStatus(ingredientName);
+                        newIngredient.setHealthStatus(healthStatus);
                         newIngredient.setNotes("Auto-added from barcode scan");
 
                         return ingredientRepository.save(newIngredient);

@@ -1,6 +1,8 @@
 package com.mattmoyer.foodhealth.backend.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -12,17 +14,31 @@ public class OpenFoodFactsService {
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> fetchProductByBarcode(String barcode) {
+        return fetchProductByBarcode(List.of(barcode));
+    }
 
-        String url = "https://world.openfoodfacts.org/api/v0/product/"
-                + barcode + ".json";
-
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-
-        if (response == null || !response.get("status").equals(1)) {
-            throw new RuntimeException("Product not found in OpenFoodFacts");
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> fetchProductByBarcode(List<String> barcodes) {
+        if (barcodes == null || barcodes.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product barcode is required");
         }
 
-        return (Map<String, Object>) response.get("product");
+        for (String barcode : barcodes) {
+            if (barcode == null || barcode.isBlank()) {
+                continue;
+            }
+
+            String url = "https://world.openfoodfacts.org/api/v0/product/"
+                    + barcode + ".json";
+
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+
+            if (response != null && response.get("status") != null && response.get("status").equals(1)) {
+                return (Map<String, Object>) response.get("product");
+            }
+        }
+
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found in OpenFoodFacts");
     }
 
     public List<String> extractIngredients(
