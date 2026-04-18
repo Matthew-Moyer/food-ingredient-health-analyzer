@@ -8,14 +8,29 @@ function ProductResultCard({ product }) {
 
   const getIngredientDisplay = (ingredient) => {
     if (ingredient.healthStatus === "HEALTHY") {
-      return { chipClass: "ingredient-chip-good", label: "Healthy", icon: "+" };
+      return {
+        chipClass: "ingredient-chip-good",
+        iconClass: "ingredient-icon-good",
+        label: "Healthy",
+        icon: "✓",
+      };
     }
 
     if (ingredient.healthStatus === "UNHEALTHY") {
-      return { chipClass: "ingredient-chip-caution", label: "Unhealthy", icon: "-" };
+      return {
+        chipClass: "ingredient-chip-caution",
+        iconClass: "ingredient-icon-caution",
+        label: "Unhealthy",
+        icon: "X",
+      };
     }
 
-    return { chipClass: "ingredient-chip-unknown", label: "Unknown", icon: "?" };
+    return {
+      chipClass: "ingredient-chip-unknown",
+      iconClass: "ingredient-icon-unknown",
+      label: "Unknown",
+      icon: "?",
+    };
   };
 
   return (
@@ -48,7 +63,7 @@ function ProductResultCard({ product }) {
             return (
               <li key={index} className="ingredient-row">
                 <div className="ingredient-name-group">
-                  <span className="ingredient-icon" aria-hidden="true">
+                  <span className={`ingredient-icon ${display.iconClass}`} aria-hidden="true">
                     {display.icon}
                   </span>
                   <span className="ingredient-name">{ingredient.name}</span>

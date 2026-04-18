@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findTopByBarcodeOrderByIdDesc(String barcode);
     List<Product> findAllByBarcodeOrderByIdDesc(String barcode);
+    List<Product> findByNameContainingIgnoreCaseOrBrandContainingIgnoreCase(String name, String brand);
 }

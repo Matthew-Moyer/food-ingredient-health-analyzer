@@ -94,11 +94,12 @@
   margin: 0 0 28px;
 }
 
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  align-items: center;
+.hero-support-text {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.65;
 }
 
 .primary-button,
@@ -149,7 +150,7 @@
   padding: 28px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
   min-height: 220px;
 }
 
@@ -157,12 +158,23 @@
   color: rgba(245, 255, 249, 0.72);
 }
 
+.hero-stat-card p {
+  color: rgba(245, 255, 249, 0.9);
+}
+
 .stat-value {
-  margin-top: 12px;
-  font-size: 1.85rem;
-  line-height: 1.05;
+  margin-top: 10px;
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  line-height: 1.08;
   font-weight: 700;
   letter-spacing: -0.04em;
+}
+
+.hero-stat-description {
+  margin: 14px 0 0;
+  max-width: 28rem;
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .content-grid {
@@ -185,6 +197,39 @@
   margin: 10px 0 8px;
   font-size: 1.7rem;
   letter-spacing: -0.04em;
+}
+
+.scanner-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.scanner-callout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(82, 156, 117, 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(235, 245, 239, 0.95), rgba(248, 251, 249, 0.92));
+  border: 1px solid rgba(21, 49, 38, 0.08);
+}
+
+.scanner-callout strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.scanner-callout p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.scanner-launch-button {
+  white-space: nowrap;
 }
 
 .scanner-container {
@@ -260,6 +305,8 @@
   gap: 10px;
 }
 
+.name-search-form,
+.barcode-upload-panel,
 .scan-feedback-card,
 .manual-barcode-form {
   display: grid;
@@ -268,6 +315,17 @@
   border-radius: 20px;
   border: 1px solid rgba(21, 49, 38, 0.1);
   background: rgba(255, 255, 255, 0.72);
+}
+
+.name-search-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.name-search-helper {
+  margin: 0;
+  color: var(--muted);
 }
 
 .scan-feedback-header {
@@ -356,6 +414,13 @@
   background: rgba(255, 255, 255, 0.48);
 }
 
+.scanner-idle-state {
+  gap: 8px;
+  background:
+    radial-gradient(circle at top, rgba(80, 149, 111, 0.12), transparent 40%),
+    rgba(255, 255, 255, 0.55);
+}
+
 .empty-scanner-icon {
   width: 58px;
   height: 58px;
@@ -396,9 +461,9 @@
 }
 
 .score-badge {
-  min-width: 130px;
+  min-width: 160px;
   border-radius: 22px;
-  padding: 16px;
+  padding: 18px 20px;
   color: #fff;
   text-align: right;
   box-shadow: var(--shadow-soft);
@@ -427,9 +492,10 @@
 .score-value {
   display: block;
   margin-top: 8px;
-  font-size: 2.2rem;
+  font-size: 2rem;
   line-height: 1.05;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .comparison-section {
@@ -570,6 +636,21 @@
   flex-shrink: 0;
 }
 
+.ingredient-icon-good {
+  background: var(--good-soft);
+  color: var(--good-text);
+}
+
+.ingredient-icon-caution {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.ingredient-icon-unknown {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
 .ingredient-name {
   text-transform: capitalize;
   word-break: break-word;
@@ -589,13 +670,13 @@
 }
 
 .ingredient-chip-caution {
-  background: var(--warning-soft);
-  color: var(--warning-text);
+  background: var(--danger-soft);
+  color: var(--danger-text);
 }
 
 .ingredient-chip-unknown {
-  background: #e9edf1;
-  color: #4e616f;
+  background: var(--warning-soft);
+  color: var(--warning-text);
 }
 
 @media (max-width: 960px) {
@@ -628,7 +709,8 @@
   .ingredient-row,
   .ingredient-header,
   .comparison-header,
-  .comparison-card-top {
+  .comparison-card-top,
+  .scanner-callout {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -643,6 +725,11 @@
   }
 
   .manual-barcode-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .name-search-row {
     flex-direction: column;
     align-items: stretch;
   }

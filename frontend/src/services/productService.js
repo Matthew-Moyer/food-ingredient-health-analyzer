@@ -12,3 +12,16 @@ export const scanBarcode = async (barcode) => {
     throw error;
   }
 };
+
+export const searchProductByName = async (productName) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/search/by-name`, {
+      params: { name: productName },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error searching product by name:", error);
+    throw error;
+  }
+};

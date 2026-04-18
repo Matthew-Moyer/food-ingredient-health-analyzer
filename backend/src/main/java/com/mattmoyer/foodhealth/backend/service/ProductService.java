@@ -13,9 +13,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
 
 @Service
 public class ProductService {
+    private static final Set<String> IGNORED_INGREDIENT_NAMES = Set.of(
+            "and",
+            "or",
+            "with",
+            "contains",
+            "contain",
+            "less than",
+            "less than 2 of",
+            "less than 2% of",
+            "less than 1 of",
+            "less than 1% of");
 
     private final ProductRepository productRepository;
     private final IngredientRepository ingredientRepository;
@@ -67,7 +79,7 @@ public class ProductService {
         for (String rawIngredientName : ingredientNames) {
             String ingredientName = normalizeIngredientName(rawIngredientName);
 
-            if (ingredientName.isEmpty()) {
+            if (ingredientName.isEmpty() || isIgnorableIngredientName(ingredientName)) {
                 continue;
             }
 
@@ -83,6 +95,32 @@ public class ProductService {
         refreshIngredientHealthStatuses(newProduct);
         updateHealthScore(newProduct);
         return productRepository.save(newProduct);
+    }
+
+    public Product getProductWithHealthScoreByName(String productName) {
+        String normalizedQuery = productName == null ? "" : productName.trim();
+
+        if (normalizedQuery.isEmpty()) {
+            throw new IllegalArgumentException("Product name is required.");
+        }
+
+        try {
+            String barcode = openFoodFactsService.searchBarcodeByProductName(normalizedQuery);
+            return getProductWithHealthScore(barcode);
+        } catch (org.springframework.web.server.ResponseStatusException exception) {
+            if (!org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE.equals(exception.getStatusCode())) {
+                throw exception;
+            }
+
+            Product cachedProduct = findLatestProductByName(normalizedQuery);
+            if (cachedProduct != null) {
+                refreshIngredientHealthStatuses(cachedProduct);
+                updateHealthScore(cachedProduct);
+                return productRepository.save(cachedProduct);
+            }
+
+            throw exception;
+        }
     }
 
     public Product saveProduct(Product product) {
@@ -101,6 +139,71 @@ public class ProductService {
         }
 
         return productRepository.findTopByBarcodeOrderByIdDesc(barcode).orElse(null);
+    }
+
+    public Product findLatestProductByName(String productName) {
+        if (productName == null || productName.isBlank()) {
+            return null;
+        }
+
+        String normalizedQuery = normalizeSearchText(productName);
+
+        return productRepository
+                .findAll()
+                .stream()
+                .filter(product -> scoreProductNameMatch(normalizedQuery, product) > 0)
+                .max(Comparator
+                        .comparingInt((Product product) -> scoreProductNameMatch(normalizedQuery, product))
+                        .thenComparing(Product::getId, Comparator.nullsLast(Long::compareTo)))
+                .orElse(null);
+    }
+
+    private int scoreProductNameMatch(String query, Product product) {
+        String name = normalizeSearchText(product.getName());
+        String brand = normalizeSearchText(product.getBrand());
+        int score = 0;
+
+        if (name.equals(query)) {
+            score += 100;
+        } else if (name.startsWith(query)) {
+            score += 80;
+        } else if (name.contains(query)) {
+            score += 60;
+        }
+
+        if (brand.equals(query)) {
+            score += 30;
+        } else if (brand.contains(query)) {
+            score += 15;
+        }
+
+        for (String term : query.split("\\s+")) {
+            if (term.isBlank()) {
+                continue;
+            }
+
+            if (name.contains(term)) {
+                score += 10;
+            }
+
+            if (brand.contains(term)) {
+                score += 5;
+            }
+        }
+
+        return score;
+    }
+
+    private String normalizeSearchText(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9\\s]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     public List<String> generateBarcodeCandidates(String barcode) {
@@ -176,6 +279,9 @@ public class ProductService {
             return;
         }
 
+        product.getIngredients().removeIf(ingredient ->
+                ingredient == null || isIgnorableIngredientName(normalizeIngredientName(ingredient.getName())));
+
         for (Ingredient ingredient : product.getIngredients()) {
             String normalizedName = normalizeIngredientName(ingredient.getName());
             IngredientHealthStatus healthStatus = determineHealthStatus(normalizedName);
@@ -198,15 +304,38 @@ public class ProductService {
     }
 
     public String normalizeIngredientName(String ingredientName) {
-        return ingredientName
+        if (ingredientName == null) {
+            return "";
+        }
+
+        String normalizedIngredient = ingredientName
                 .toLowerCase(Locale.ROOT)
                 .trim()
                 .replaceAll("\\([^)]*\\)", "")
                 .replaceAll("\\[[^\\]]*\\]", "")
                 .replace(",", "")
                 .replace(".", "")
+                .replaceAll("^and/or\\s+", "")
+                .replaceAll("^and\\s+", "")
+                .replaceAll("^or\\s+", "")
+                .replaceAll("\\sand/or\\s", " ")
+                .replaceAll("\\sand\\sor\\s", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
+
+        if (normalizedIngredient.equals("canola")) {
+            return "canola oil";
+        }
+
+        if (normalizedIngredient.equals("sunflower")) {
+            return "sunflower oil";
+        }
+
+        return normalizedIngredient;
+    }
+
+    public boolean isIgnorableIngredientName(String ingredientName) {
+        return IGNORED_INGREDIENT_NAMES.contains(normalizeIngredientName(ingredientName));
     }
 
     private Ingredient createIngredient(String ingredientName) {
@@ -242,7 +371,7 @@ public class ProductService {
                 "olive oil", "extra virgin olive oil", "avocado oil", "coconut oil", "vinegar", "apple cider vinegar",
                 "balsamic vinegar", "red wine vinegar",
                 "white vinegar", "honey", "maple syrup", "cinnamon", "turmeric", "cumin", "paprika", "black pepper",
-                "white pepper", "chili powder", "oregano", "basil", "thyme", "rosemary", "parsley", "cilantro", "dill",
+                "white pepper", "salt", "chili powder", "oregano", "basil", "thyme", "rosemary", "parsley", "cilantro", "dill",
                 "mint", "sage", "bay leaf", "nutmeg", "clove", "cardamom", "ginger powder", "garlic powder",
                 "onion powder", "mustard seeds", "fennel seeds", "coriander", "matcha", "green tea", "black tea",
                 "herbal tea", "coffee", "dark chocolate", "cacao", "cocoa powder", "whole grain pasta",

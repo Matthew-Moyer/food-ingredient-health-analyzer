@@ -15,7 +15,6 @@ function ProductComparisonBoard({ products, onRemoveProduct, onClearProducts }) 
         <div>
           <span className="section-kicker">Compare</span>
           <h2>Health score lineup</h2>
-          <p>Each card uses the same score color rules: 64 and below red, 65-79 yellow, 80-100 green.</p>
         </div>
 
         {products.length > 1 && (

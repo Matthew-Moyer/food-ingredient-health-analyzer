@@ -50,6 +50,11 @@ public class ProductController {
         return productService.getProductWithHealthScore(barcode);
     }
 
+    @GetMapping("/search/by-name")
+    public Product getProductByName(@RequestParam("name") String productName) {
+        return productService.getProductWithHealthScoreByName(productName);
+    }
+
     @PostMapping("/{productId}/ingredients/{ingredientId}")
     public Product addIngredientToProduct(
             @PathVariable Long productId,
