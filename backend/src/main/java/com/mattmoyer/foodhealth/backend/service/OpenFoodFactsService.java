@@ -25,7 +25,6 @@ public class OpenFoodFactsService {
             "less than 1 of",
             "less than 1% of");
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> fetchProductByBarcode(String barcode) {
         return fetchProductByBarcode(List.of(barcode));
     }
@@ -103,7 +102,9 @@ public class OpenFoodFactsService {
             Map<String, Object> product = (Map<String, Object>) rawProduct;
             Object code = product.get("code");
 
-            if (code == null || code.toString().isBlank()) {
+            String normalizedBarcode = normalizeSearchResultBarcode(code);
+
+            if (normalizedBarcode.isBlank()) {
                 continue;
             }
 
@@ -119,42 +120,54 @@ public class OpenFoodFactsService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found in OpenFoodFacts");
         }
 
-        return bestMatch.get("code").toString();
+        String normalizedBarcode = normalizeSearchResultBarcode(bestMatch.get("code"));
+
+        if (normalizedBarcode.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product barcode was unavailable in OpenFoodFacts");
+        }
+
+        return normalizedBarcode;
     }
 
     private int scoreSearchMatch(String query, Map<String, Object> product) {
         String normalizedQuery = normalizeSearchText(query);
         String productName = normalizeSearchText(product.get("product_name"));
         String brand = normalizeSearchText(product.get("brands"));
+        Set<String> queryTerms = splitSearchTerms(normalizedQuery);
+        Set<String> productTerms = splitSearchTerms(productName);
+        Set<String> brandTerms = splitSearchTerms(brand);
         int score = 0;
 
         if (!productName.isEmpty()) {
             if (productName.equals(normalizedQuery)) {
-                score += 100;
+                score += 500;
             } else if (productName.startsWith(normalizedQuery)) {
-                score += 80;
+                score += 250;
             } else if (productName.contains(normalizedQuery)) {
-                score += 60;
+                score += 180;
             }
         }
 
-        if (!brand.isEmpty() && normalizedQuery.contains(brand)) {
-            score += 15;
+        if (!brand.isEmpty()) {
+            if (brand.equals(normalizedQuery)) {
+                score += 100;
+            } else if (normalizedQuery.contains(brand)) {
+                score += 30;
+            }
         }
 
-        String[] queryTerms = normalizedQuery.split("\\s+");
-        for (String term : queryTerms) {
-            if (term.isBlank()) {
-                continue;
-            }
+        int matchedProductTerms = countSharedTerms(queryTerms, productTerms);
+        int matchedBrandTerms = countSharedTerms(queryTerms, brandTerms);
+        int missingProductTerms = Math.max(0, queryTerms.size() - matchedProductTerms);
+        int extraProductTerms = Math.max(0, productTerms.size() - matchedProductTerms);
 
-            if (productName.contains(term)) {
-                score += 10;
-            }
+        score += matchedProductTerms * 40;
+        score += matchedBrandTerms * 10;
+        score -= missingProductTerms * 90;
+        score -= extraProductTerms * 18;
 
-            if (brand.contains(term)) {
-                score += 5;
-            }
+        if (!queryTerms.isEmpty() && matchedProductTerms == queryTerms.size()) {
+            score += 120;
         }
 
         return score;
@@ -170,6 +183,46 @@ public class OpenFoodFactsService {
                 .replaceAll("[^a-z0-9\\s]", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
+    }
+
+    private String normalizeSearchResultBarcode(Object code) {
+        if (code == null) {
+            return "";
+        }
+
+        String normalizedCode = code.toString().trim();
+
+        if (normalizedCode.endsWith(".0")) {
+            normalizedCode = normalizedCode.substring(0, normalizedCode.length() - 2);
+        }
+
+        normalizedCode = normalizedCode.replaceAll("\\D", "");
+
+        if (normalizedCode.length() == 11) {
+            return "0" + normalizedCode;
+        }
+
+        return normalizedCode;
+    }
+
+    private Set<String> splitSearchTerms(String value) {
+        if (value == null || value.isBlank()) {
+            return Set.of();
+        }
+
+        return new LinkedHashSet<>(Arrays.asList(value.split("\\s+")));
+    }
+
+    private int countSharedTerms(Set<String> leftTerms, Set<String> rightTerms) {
+        int matches = 0;
+
+        for (String term : leftTerms) {
+            if (rightTerms.contains(term)) {
+                matches++;
+            }
+        }
+
+        return matches;
     }
 
     public List<String> extractIngredients(

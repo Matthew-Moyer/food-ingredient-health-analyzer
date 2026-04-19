@@ -161,34 +161,37 @@ public class ProductService {
     private int scoreProductNameMatch(String query, Product product) {
         String name = normalizeSearchText(product.getName());
         String brand = normalizeSearchText(product.getBrand());
+        Set<String> queryTerms = splitSearchTerms(query);
+        Set<String> nameTerms = splitSearchTerms(name);
+        Set<String> brandTerms = splitSearchTerms(brand);
         int score = 0;
 
         if (name.equals(query)) {
-            score += 100;
+            score += 500;
         } else if (name.startsWith(query)) {
-            score += 80;
+            score += 250;
         } else if (name.contains(query)) {
-            score += 60;
+            score += 180;
         }
 
         if (brand.equals(query)) {
-            score += 30;
+            score += 100;
         } else if (brand.contains(query)) {
-            score += 15;
+            score += 30;
         }
 
-        for (String term : query.split("\\s+")) {
-            if (term.isBlank()) {
-                continue;
-            }
+        int matchedNameTerms = countSharedTerms(queryTerms, nameTerms);
+        int matchedBrandTerms = countSharedTerms(queryTerms, brandTerms);
+        int missingNameTerms = Math.max(0, queryTerms.size() - matchedNameTerms);
+        int extraNameTerms = Math.max(0, nameTerms.size() - matchedNameTerms);
 
-            if (name.contains(term)) {
-                score += 10;
-            }
+        score += matchedNameTerms * 40;
+        score += matchedBrandTerms * 10;
+        score -= missingNameTerms * 90;
+        score -= extraNameTerms * 18;
 
-            if (brand.contains(term)) {
-                score += 5;
-            }
+        if (!queryTerms.isEmpty() && matchedNameTerms == queryTerms.size()) {
+            score += 120;
         }
 
         return score;
@@ -206,6 +209,26 @@ public class ProductService {
                 .trim();
     }
 
+    private Set<String> splitSearchTerms(String value) {
+        if (value == null || value.isBlank()) {
+            return Set.of();
+        }
+
+        return new LinkedHashSet<>(List.of(value.split("\\s+")));
+    }
+
+    private int countSharedTerms(Set<String> leftTerms, Set<String> rightTerms) {
+        int matches = 0;
+
+        for (String term : leftTerms) {
+            if (rightTerms.contains(term)) {
+                matches++;
+            }
+        }
+
+        return matches;
+    }
+
     public List<String> generateBarcodeCandidates(String barcode) {
         String normalizedBarcode = barcode == null ? "" : barcode.replaceAll("\\s+", "").trim();
         Set<String> candidates = new LinkedHashSet<>();
@@ -215,6 +238,10 @@ public class ProductService {
         }
 
         candidates.add(normalizedBarcode);
+
+        if (normalizedBarcode.matches("\\d{11}")) {
+            candidates.add("0" + normalizedBarcode);
+        }
 
         if (normalizedBarcode.matches("\\d{12}")) {
             candidates.add("0" + normalizedBarcode);
