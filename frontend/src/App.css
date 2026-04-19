@@ -181,12 +181,22 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
+  align-items: stretch;
+}
+
+.content-grid > * {
+  min-width: 0;
 }
 
 .surface-card {
   background: var(--surface);
   border-radius: 28px;
   padding: 28px;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .section-heading {
@@ -202,6 +212,7 @@
 .scanner-panel {
   display: grid;
   gap: 18px;
+  min-width: 0;
 }
 
 .scanner-callout {
@@ -235,6 +246,7 @@
 .scanner-container {
   display: grid;
   gap: 18px;
+  min-width: 0;
 }
 
 .scanner-toolbar {
@@ -253,29 +265,70 @@
 
 .video-wrapper {
   display: flex;
+  width: 100%;
+  min-width: 0;
 }
 
 .video-container {
   width: 100%;
+  max-width: 100%;
   min-height: 320px;
+  aspect-ratio: 16 / 9;
+  box-sizing: border-box;
   border: 1px solid rgba(21, 49, 38, 0.14);
   border-radius: 24px;
   overflow: hidden;
   position: relative;
+  display: block;
   background:
     radial-gradient(circle at top, rgba(80, 149, 111, 0.18), transparent 38%),
     linear-gradient(180deg, #f0f7f2, #dce8dd);
+  isolation: isolate;
 }
 
-.video-container video {
+.video-viewport {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.video-viewport > video,
+.video-viewport > canvas,
+.video-viewport > .drawingBuffer,
+.video-viewport > .viewport,
+.video-viewport > .viewport > video,
+.video-viewport > .viewport > canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.video-viewport video,
+.video-viewport canvas {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+}
+
+.video-viewport canvas {
+  pointer-events: none;
+}
+
+.video-viewport .drawingBuffer,
+.video-viewport .viewport,
+.video-viewport .viewport > canvas {
+  z-index: 1;
 }
 
 .scan-overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
   pointer-events: none;
   display: flex;
   flex-direction: column;
@@ -321,6 +374,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 .name-search-helper {
@@ -350,6 +404,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 .manual-barcode-input {
@@ -736,5 +791,6 @@
 
   .video-container {
     min-height: 260px;
+    aspect-ratio: 4 / 3;
   }
 }

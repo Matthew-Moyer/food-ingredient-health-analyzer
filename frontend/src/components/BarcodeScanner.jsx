@@ -124,6 +124,12 @@ function BarcodeScanner({ onScanSuccess }) {
   };
 
   const startCamera = () => {
+    if (!scannerRef.current) {
+      setScanStatus("Camera preview could not be mounted.");
+      return;
+    }
+
+    scannerRef.current.replaceChildren();
     setScanning(true);
     setScanStatus("Scanning for a retail UPC or EAN barcode...");
     resetDetectionState();
@@ -157,6 +163,9 @@ function BarcodeScanner({ onScanSuccess }) {
       (err) => {
         if (err) {
           console.error(err);
+          scannerRef.current?.replaceChildren();
+          setScanning(false);
+          setScanStatus("Camera access failed. Check camera permission and try again.");
           return;
         }
 
@@ -192,6 +201,7 @@ function BarcodeScanner({ onScanSuccess }) {
   const stopCamera = () => {
     Quagga.stop();
     Quagga.offDetected();
+    scannerRef.current?.replaceChildren();
     resetDetectionState();
     setScanning(false);
   };
@@ -212,7 +222,8 @@ function BarcodeScanner({ onScanSuccess }) {
       </div>
 
       <div className="video-wrapper">
-        <div ref={scannerRef} className="video-container">
+        <div className="video-container">
+          <div ref={scannerRef} className="video-viewport" />
           <div className="scan-overlay">
             <div className="scan-box"></div>
             <p className="scan-text">Place barcode inside the guide</p>
