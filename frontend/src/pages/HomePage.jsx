@@ -169,7 +169,7 @@ function HomePage() {
                   id="product-name-search"
                   className="manual-barcode-input"
                   type="text"
-                  placeholder="Ex: Oreos, Cheerios, Tostitos Scoops"
+                  placeholder="Ex: Mini Wheats, Cheerios, Tostitos"
                   value={productNameQuery}
                   onChange={(event) => setProductNameQuery(event.target.value)}
                 />
